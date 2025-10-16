@@ -18,12 +18,14 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.9",
     "typegoose": "^5.9.1",
+    "winston": "^3.18.3",
     "zod": "^4.1.12"
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx,js,jsx}": [
@@ -43,6 +45,8 @@
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.4.0",
     "husky": "^9.1.7",
     "jiti": "^2.6.1",

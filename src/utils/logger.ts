@@ -1,5 +1,12 @@
-export const logger = {
-  info: (...args: any[]) => console.log('[INFO]', ...args),
-  warn: (...args: any[]) => console.warn('[WARN]', ...args),
-  error: (...args: any[]) => console.error('[ERROR]', ...args),
-};
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ level, message, timestamp }) => `${timestamp} ${level}: ${message}`)
+  ),
+  transports: [new winston.transports.Console()],
+});
+
+export default logger;

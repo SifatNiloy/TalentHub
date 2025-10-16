@@ -1,17 +1,11 @@
 import mongoose from 'mongoose';
-import { logger } from '../utils/logger';
-import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
-dotenv.config();
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/talenthub';
 
-const MONGO_URI = process.env.MONGO_URI || '';
-
-export async function connectDatabase() {
-  try {
-    await mongoose.connect(MONGO_URI);
-    logger.info('✅ MongoDB connected successfully');
-  } catch (error) {
-    logger.error('❌ MongoDB connection error:', error);
-    process.exit(1);
-  }
+export default async function connectDB() {
+  mongoose.set('strictQuery', true);
+  await mongoose.connect(MONGO_URI, {
+  } as mongoose.ConnectOptions);
+  logger.info('Connected to MongoDB');
 }

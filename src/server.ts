@@ -1,31 +1,22 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
+import { createServer } from 'http';
 import app from './app';
-import { connectDatabase } from './config/database';
-import { logger } from './utils/logger';
-
-dotenv.config();
+import connectDB from './config/database';
+import logger from './utils/logger';
 
 const PORT = process.env.PORT || 4000;
 
-// Start server function
-async function startServer() {
-  await connectDatabase();
-
-  app.listen(PORT, () => {
-    logger.info(`🚀 TalentHub server running at http://localhost:${PORT}`);
-  });
+async function start() {
+  try {
+    await connectDB();
+    const server = createServer(app);
+    server.listen(PORT, () => {
+      logger.info(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    logger.error('Failed to start server', err as Error);
+    process.exit(1);
+  }
 }
 
-// Global error handling
-process.on('unhandledRejection', (err) => {
-  logger.error('UNHANDLED REJECTION!', err);
-  process.exit(1);
-});
-
-process.on('uncaughtException', (err) => {
-  logger.error('UNCAUGHT EXCEPTION!', err);
-  process.exit(1);
-});
-
-// Start the app
-startServer();
+start();
