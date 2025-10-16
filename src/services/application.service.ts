@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApplicationModel } from '../models/Application.model';
 import { JobModel } from '../models/Job.model';
 import { UserModel } from '../models/User.model';
@@ -36,7 +37,7 @@ export const ApplicationService = {
       status: 'pending',
       appliedAt: new Date(),
     });
-    return app.populate('job').populate('applicant');
+    return (await app.populate('job')).populate('applicant');
   },
 
   async getById(id: string) {

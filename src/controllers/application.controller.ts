@@ -9,6 +9,7 @@ export const ApplicationController = {
   },
 
   async list(req: Request, res: Response) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const q = req.query as any;
     const result = await ApplicationService.findAll(q);
     res.json(result);
