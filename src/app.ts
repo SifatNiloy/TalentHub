@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import logger from './utils/logger';
-
+import jobRoutes from "./routes/job.routes";
 const app = express();
 
 app.use(helmet());
@@ -29,5 +29,8 @@ app.get('/', (_req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'd
 
 // error handler (last middleware)
 app.use(errorHandler);
+
+app.use("/api/jobs", jobRoutes);
+
 
 export default app;

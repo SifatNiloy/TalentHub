@@ -1,35 +1,30 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Request, Response } from 'express';
-import { JobService } from '../services/job.service';
+import { Request, Response } from "express";
+import { JobService } from "../services/job.service";
 
-export const JobController = {
-  async create(req: Request, res: Response) {
-    const payload = req.body;
-    const job = await JobService.create(payload);
-    res.status(201).json(job);
-  },
+export const createJobHandler = async (req: Request, res: Response) => {
+  const job = await JobService.createJob(req.body);
+  res.status(201).json({ success: true, data: job });
+};
 
-  async list(req: Request, res: Response) {
-    const q = req.query as any;
-    const result = await JobService.findAll(q);
-    res.json(result);
-  },
+export const getAllJobsHandler = async (req: Request, res: Response) => {
+  const jobs = await JobService.getAllJobs(req.query);
+  res.status(200).json({ success: true, data: jobs });
+};
 
-  async getOne(req: Request, res: Response) {
-    const { id } = req.params;
-    const job = await JobService.getById(id);
-    res.json(job);
-  },
+export const getJobByIdHandler = async (req: Request, res: Response) => {
+  const job = await JobService.getJobById(req.params.id);
+  if (!job) return res.status(404).json({ success: false, message: "Job not found" });
+  res.status(200).json({ success: true, data: job });
+};
 
-  async update(req: Request, res: Response) {
-    const { id } = req.params;
-    const job = await JobService.update(id, req.body);
-    res.json(job);
-  },
+export const updateJobHandler = async (req: Request, res: Response) => {
+  const job = await JobService.updateJob(req.params.id, req.body);
+  if (!job) return res.status(404).json({ success: false, message: "Job not found" });
+  res.status(200).json({ success: true, data: job });
+};
 
-  async remove(req: Request, res: Response) {
-    const { id } = req.params;
-    const job = await JobService.remove(id);
-    res.status(204).send();
-  },
+export const deleteJobHandler = async (req: Request, res: Response) => {
+  const job = await JobService.deleteJob(req.params.id);
+  if (!job) return res.status(404).json({ success: false, message: "Job not found" });
+  res.status(200).json({ success: true, message: "Job deleted successfully" });
 };

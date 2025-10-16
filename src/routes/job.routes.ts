@@ -1,34 +1,46 @@
-import { Router } from 'express';
-import { JobController } from '../controllers/job.controller';
-import { validate } from '../middleware/validate.middleware';
-import { createJobSchema, updateJobSchema, getJobsQuerySchema } from '../schemas/job.schema';
+import express from "express";
+import {
+  createJobHandler,
+  getAllJobsHandler,
+  getJobByIdHandler,
+  updateJobHandler,
+  deleteJobHandler,
+} from "../controllers/job.controller";
+import validateResource from "../middleware/validateresource";
+import { createJobSchema, jobIdSchema, updateJobSchema } from "../schema/job.schema";
+import asyncWrapper from "../utils/async-wrapper";
 
-const router = Router();
+const router = express.Router();
 
-/**
- * GET /api/v1/jobs
- * Query params handled by getJobsQuerySchema
- */
-router.get('/', validate(getJobsQuerySchema, 'query'), JobController.list);
+// Create a new job
+router.post(
+  "/create",
+  validateResource(createJobSchema),
+  asyncWrapper(createJobHandler)
+);
 
-/**
- * POST /api/v1/jobs
- */
-router.post('/', validate(createJobSchema), JobController.create);
+// Get all jobs (with filters)
+router.get("/all", asyncWrapper(getAllJobsHandler));
 
-/**
- * GET /api/v1/jobs/:id
- */
-router.get('/:id', JobController.getOne);
+// Get a single job
+router.get(
+  "/:id",
+  validateResource(jobIdSchema),
+  asyncWrapper(getJobByIdHandler)
+);
 
-/**
- * PUT /api/v1/jobs/:id
- */
-router.put('/:id', validate(updateJobSchema), JobController.update);
+// Update a job
+router.put(
+  "/update/:id",
+  validateResource(updateJobSchema),
+  asyncWrapper(updateJobHandler)
+);
 
-/**
- * DELETE /api/v1/jobs/:id
- */
-router.delete('/:id', JobController.remove);
+// Delete a job
+router.delete(
+  "/delete/:id",
+  validateResource(jobIdSchema),
+  asyncWrapper(deleteJobHandler)
+);
 
 export default router;

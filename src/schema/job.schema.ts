@@ -1,44 +1,53 @@
-import { z } from 'zod';
-
-export const locationSchema = z.object({
-  type: z.literal('Point'),
-  coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]),
-});
-
+import { z } from "zod";
+import { EMPLOYMENT_TYPE } from "../constants/job.constant";
 export const createJobSchema = z.object({
-  title: z.string().min(3),
-  description: z.string().optional(),
-  companyId: z.string().optional(), // ObjectId string
-  location: locationSchema,
-  skills: z.array(z.string()).optional(),
-  salary: z
-    .object({
-      min: z.number().int().nonnegative().optional(),
-      max: z.number().int().nonnegative().optional(),
-      currency: z.string().optional(),
-    })
-    .optional(),
-  employmentType: z.enum(['full_time', 'part_time', 'contract', 'internship']).optional(),
-  remote: z.boolean().optional(),
-  isActive: z.boolean().optional(),
+  body: z.object({
+    title: z.string().min(3),
+    description: z.string().min(10),
+    company: z.string().min(2),
+    location: z.string().min(2),
+    salaryRange: z.object({
+      min: z.number().positive(),
+      max: z.number().positive(),
+    }),
+    employmentType: z.enum([
+      EMPLOYMENT_TYPE.FULL_TIME,
+      EMPLOYMENT_TYPE.PART_TIME,
+      EMPLOYMENT_TYPE.CONTRACT,
+      EMPLOYMENT_TYPE.INTERNSHIP,
+      EMPLOYMENT_TYPE.FREELANCE,
+    ]),
+    remote: z.boolean().optional(),
+  }),
 });
 
-export const updateJobSchema = createJobSchema.partial();
+export const updateJobSchema = z.object({
+  body: z.object({
+    title: z.string().min(3).optional(),
+    description: z.string().min(10).optional(),
+    location: z.string().optional(),
+    salaryRange: z
+      .object({
+        min: z.number().positive(),
+        max: z.number().positive(),
+      })
+      .optional(),
+    employmentType: z
+      .enum([
+        EMPLOYMENT_TYPE.FULL_TIME,
+        EMPLOYMENT_TYPE.PART_TIME,
+        EMPLOYMENT_TYPE.CONTRACT,
+        EMPLOYMENT_TYPE.INTERNSHIP,
+        EMPLOYMENT_TYPE.FREELANCE,
+      ])
+      .optional(),
+    remote: z.boolean().optional(),
+    status: z.enum(["Active", "Closed", "Draft"]).optional(),
+  }),
+});
 
-export const getJobsQuerySchema = z.object({
-  title: z.string().optional(),
-  skill: z.string().optional(),
-  employmentType: z.enum(['full_time', 'part_time', 'contract', 'internship']).optional(),
-  remote: z.preprocess((v) => {
-    if (v === 'true') return true;
-    if (v === 'false') return false;
-    return v;
-  }, z.boolean().optional()),
-  page: z.coerce.number().int().positive().optional().default(1),
-  limit: z.coerce.number().int().positive().optional().default(10),
-  sortBy: z.string().optional(),
-  // radius search params
-  lat: z.coerce.number().optional(),
-  lng: z.coerce.number().optional(),
-  radiusKm: z.coerce.number().optional(), // in km
+export const jobIdSchema = z.object({
+  params: z.object({
+    id: z.string().min(1),
+  }),
 });
