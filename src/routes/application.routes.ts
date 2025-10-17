@@ -1,47 +1,65 @@
-import { Router } from 'express';
-import { ApplicationController } from '../controllers/application.controller';
-import { validate } from '../middleware/validate.middleware';
-import { createApplicationSchema, updateApplicationSchema, getApplicationsQuerySchema, updateStatusSchema } from '../schemas/application.schema';
+import express from "express";
 
-const router = Router();
+import validateResource from "../middleware/validateresource";
+import {
+    applicationIdSchema,
+  createApplicationSchema,
+  getApplicationsQuerySchema,
+  updateApplicationSchema,
+  updateStatusSchema,
+} from "../schema/application.schema";
+import asyncWrapper from "../utils/async-wrapper";
+import { applyHandler, deleteApplicationHandler, getSingleApplicationHandler, listApplicationsHandler, updateApplicationHandler, updateApplicationStatusHandler, withdrawApplicationHandler } from "../controllers/application.controller";
 
-/**
- * POST /api/v1/applications
- * body: { jobId, applicantId, coverLetter?, resumeUrl? }
- */
-router.post('/', validate(createApplicationSchema), ApplicationController.apply);
+const router = express.Router();
 
-/**
- * GET /api/v1/applications
- * query params: jobId, applicantId, status, page, limit
- */
-router.get('/', validate(getApplicationsQuerySchema, 'query'), ApplicationController.list);
+// Create (apply to a job)
+router.post(
+  "/create",
+  validateResource(createApplicationSchema),
+  asyncWrapper(applyHandler)
+);
 
-/**
- * GET /api/v1/applications/:id
- */
-router.get('/:id', ApplicationController.getOne);
+// Get all applications (with filters, pagination)
+router.get(
+  "/all",
+  validateResource(getApplicationsQuerySchema,),
+  asyncWrapper(listApplicationsHandler)
+);
 
-/**
- * PUT /api/v1/applications/:id
- * update applicant-provided fields (coverLetter, resumeUrl, notes)
- */
-router.put('/:id', validate(updateApplicationSchema), ApplicationController.update);
+// Get single application by ID
+router.get(
+  "/:id",
+  validateResource(applicationIdSchema),
+  asyncWrapper(getSingleApplicationHandler)
+);
 
-/**
- * PATCH /api/v1/applications/:id/status
- * body: { status, notes? }
- */
-router.patch('/:id/status', validate(updateStatusSchema), ApplicationController.updateStatus);
+// Update applicant-provided fields (coverLetter, resumeUrl, notes)
+router.put(
+  "/update/:id",
+  validateResource(updateApplicationSchema),
+  asyncWrapper(updateApplicationHandler)
+);
 
-/**
- * POST /api/v1/applications/:id/withdraw
- */
-router.post('/:id/withdraw', ApplicationController.withdraw);
+// Update status (admin/employer)
+router.patch(
+  "/update-status/:id",
+  validateResource(updateStatusSchema),
+  asyncWrapper(updateApplicationStatusHandler)
+);
 
-/**
- * DELETE /api/v1/applications/:id  (hard delete)
- */
-router.delete('/:id', ApplicationController.remove);
+// Withdraw application (by applicant)
+router.post(
+  "/withdraw/:id",
+  validateResource(applicationIdSchema),
+  asyncWrapper(withdrawApplicationHandler)
+);
+
+// Delete application (hard delete)
+router.delete(
+  "/delete/:id",
+  validateResource(applicationIdSchema),
+  asyncWrapper(deleteApplicationHandler)
+);
 
 export default router;

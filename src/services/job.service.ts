@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Job, JobModel } from "../models/Job.model";
+import { Job, JobModel } from "../models/job.model";
 
 export const JobService = {
   async createJob(data: Partial<Job>) {

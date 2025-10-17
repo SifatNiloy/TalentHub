@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { APPLICATION_STATUSES } from '../models/Application.model';
+import { z } from "zod";
+import { APPLICATION_STATUSES } from "../models/application.model";
 
 export const createApplicationSchema = z.object({
   jobId: z.string().min(1),
@@ -25,4 +25,8 @@ export const getApplicationsQuerySchema = z.object({
   status: z.enum([...APPLICATION_STATUSES] as [string, ...string[]]).optional(),
   page: z.coerce.number().int().positive().optional().default(1),
   limit: z.coerce.number().int().positive().optional().default(10),
+});
+
+export const applicationIdSchema = z.object({
+  id: z.string().min(1),
 });

@@ -1,10 +1,10 @@
 import express from "express";
 import {
-  createJobHandler,
-  getAllJobsHandler,
   getJobByIdHandler,
   updateJobHandler,
   deleteJobHandler,
+  createJobHandler,
+  getAllJobsHandler,
 } from "../controllers/job.controller";
 import validateResource from "../middleware/validateresource";
 import { createJobSchema, jobIdSchema, updateJobSchema } from "../schema/job.schema";

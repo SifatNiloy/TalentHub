@@ -1,13 +1,21 @@
-import { prop, getModelForClass, modelOptions, index, Ref } from '@typegoose/typegoose';
-import { User } from './User.model';
-import { Job } from './Job.model';
+import { prop, getModelForClass, modelOptions, index, Ref } from "@typegoose/typegoose";
+import { User } from "./user.model";
+import { Job } from "./job.model";
 
-export const APPLICATION_STATUSES = ['pending', 'reviewing', 'accepted', 'rejected', 'withdrawn'] as const;
+export const APPLICATION_STATUSES = [
+  "pending",
+  "reviewing",
+  "accepted",
+  "rejected",
+  "withdrawn",
+] as const;
+
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 @modelOptions({
   schemaOptions: {
     timestamps: true,
+    collection: "applications",
   },
 })
 @index({ job: 1 })
@@ -25,7 +33,7 @@ export class Application {
   @prop()
   resumeUrl?: string;
 
-  @prop({ enum: APPLICATION_STATUSES, default: 'pending' })
+  @prop({ enum: APPLICATION_STATUSES, default: "pending" })
   status!: ApplicationStatus;
 
   @prop()

@@ -1,5 +1,13 @@
 import { getModelForClass, ModelOptions, Prop } from "@typegoose/typegoose";
 
+class SalaryRange {
+  @Prop({ required: true })
+  min!: number;
+
+  @Prop({ required: true })
+  max!: number;
+}
+
 @ModelOptions({
   schemaOptions: {
     timestamps: true,
@@ -19,8 +27,8 @@ export class Job {
   @Prop({ required: true })
   location!: string;
 
-  @Prop({ required: true })
-  salaryRange!: { min: number; max: number };
+  @Prop({ type: () => SalaryRange, required: true })
+  salaryRange!: SalaryRange;
 
   @Prop({ enum: ["Full-time", "Part-time", "Contract", "Internship", "Freelance"], required: true })
   employmentType!: string;
@@ -32,7 +40,7 @@ export class Job {
   status!: string;
 
   @Prop({ required: false })
-  postedBy?: string; // employer id later when you add auth
+  postedBy?: string;
 }
 
 export const JobModel = getModelForClass(Job);
