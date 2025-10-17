@@ -5,6 +5,7 @@ import { Job } from "./job.model";
 export const APPLICATION_STATUSES = [
   "pending",
   "reviewing",
+  "reviewed",
   "accepted",
   "rejected",
   "withdrawn",
