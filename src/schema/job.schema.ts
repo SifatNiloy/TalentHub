@@ -1,53 +1,39 @@
-import { z } from "zod";
-import { EMPLOYMENT_TYPE } from "../constants/job.constant";
-export const createJobSchema = z.object({
-  body: z.object({
-    title: z.string().min(3),
-    description: z.string().min(10),
-    company: z.string().min(2),
-    location: z.string().min(2),
-    salaryRange: z.object({
-      min: z.number().positive(),
-      max: z.number().positive(),
+import {z, number, object, string, boolean } from "zod";
+import { EMPLOYMENT_TYPE, JOB_STATUS } from "../constants/job.constant";
+
+export const createJobSchema =  object({
+  body:  object({
+    title: string().min(3),
+    description:  string().min(10),
+    company:  string().min(2),
+    location:  string().min(2),
+    salaryRange:  object({
+      min:  number().positive(),
+      max:  number().positive(),
     }),
-    employmentType: z.enum([
-      EMPLOYMENT_TYPE.FULL_TIME,
-      EMPLOYMENT_TYPE.PART_TIME,
-      EMPLOYMENT_TYPE.CONTRACT,
-      EMPLOYMENT_TYPE.INTERNSHIP,
-      EMPLOYMENT_TYPE.FREELANCE,
-    ]),
-    remote: z.boolean().optional(),
+    employmentType:  z.enum(Object.values(EMPLOYMENT_TYPE)),
+    remote:  boolean().optional(),
   }),
 });
 
-export const updateJobSchema = z.object({
-  body: z.object({
-    title: z.string().min(3).optional(),
-    description: z.string().min(10).optional(),
-    location: z.string().optional(),
-    salaryRange: z
-      .object({
-        min: z.number().positive(),
-        max: z.number().positive(),
+export const updateJobSchema =  object({
+  body:  object({
+    title:  string().min(3).optional(),
+    description:  string().min(10).optional(),
+    location:  string().optional(),
+    salaryRange: object({
+        min:  number().positive(),
+        max:  number().positive(),
       })
       .optional(),
-    employmentType: z
-      .enum([
-        EMPLOYMENT_TYPE.FULL_TIME,
-        EMPLOYMENT_TYPE.PART_TIME,
-        EMPLOYMENT_TYPE.CONTRACT,
-        EMPLOYMENT_TYPE.INTERNSHIP,
-        EMPLOYMENT_TYPE.FREELANCE,
-      ])
-      .optional(),
-    remote: z.boolean().optional(),
-    status: z.enum(["Active", "Closed", "Draft"]).optional(),
+    employmentType:  z.enum(Object.values(EMPLOYMENT_TYPE)).optional(),
+    remote:  boolean().optional(),
+    status: z.enum(Object.values(JOB_STATUS)).optional(),  
   }),
 });
 
-export const jobIdSchema = z.object({
-  params: z.object({
-    id: z.string().min(1),
+export const jobIdSchema =  object({
+  params:  object({
+    id:  string().min(1),
   }),
 });
