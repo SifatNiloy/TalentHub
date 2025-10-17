@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { ApplicationService } from "../services/application.service";
 
 // Apply to a job
-export const applyHandler = async (req: Request, res: Response) => {
+export const applyJobHandler = async (req: Request, res: Response) => {
   const payload = req.body;
   const application = await ApplicationService.apply(payload);
   res.status(201).json({ success: true, data: application });

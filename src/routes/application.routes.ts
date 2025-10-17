@@ -9,7 +9,7 @@ import {
   updateStatusSchema,
 } from "../schema/application.schema";
 import asyncWrapper from "../utils/async-wrapper";
-import { applyHandler, deleteApplicationHandler, getSingleApplicationHandler, listApplicationsHandler, updateApplicationHandler, updateApplicationStatusHandler, withdrawApplicationHandler } from "../controllers/application.controller";
+import { applyJobHandler, deleteApplicationHandler, getSingleApplicationHandler, listApplicationsHandler, updateApplicationHandler, updateApplicationStatusHandler, withdrawApplicationHandler } from "../controllers/application.controller";
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ const router = express.Router();
 router.post(
   "/create",
   validateResource(createApplicationSchema),
-  asyncWrapper(applyHandler)
+  asyncWrapper(applyJobHandler)
 );
 
 // Get all applications (with filters, pagination)
