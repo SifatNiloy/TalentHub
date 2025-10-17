@@ -1,19 +1,21 @@
-import {z, number, object, string, boolean } from "zod";
+import {z, number, object, string, boolean , array } from "zod";
 import { EMPLOYMENT_TYPE, JOB_STATUS } from "../constants/job.constant";
 
-export const createJobSchema =  object({
-  body:  object({
-    title: string().min(3),
-    description:  string().min(10),
-    company:  string().min(2),
-    location:  string().min(2),
-    salaryRange:  object({
-      min:  number().positive(),
-      max:  number().positive(),
-    }),
-    employmentType:  z.enum(Object.values(EMPLOYMENT_TYPE)),
-    remote:  boolean().optional(),
-  }),
+export const createJobSchema = object({
+  body: array(
+    object({
+      title: string().min(3),
+      description: string().min(10),
+      company: string().min(2),
+      location: string().min(2),
+      salaryRange: object({
+        min: number().positive(),
+        max: number().positive(),
+      }),
+      employmentType: z.enum(Object.values(EMPLOYMENT_TYPE)),
+      remote: boolean().optional(),
+    })
+  ),
 });
 
 export const updateJobSchema =  object({
