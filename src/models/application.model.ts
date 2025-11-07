@@ -34,7 +34,7 @@ export class Application {
   @prop()
   resumeUrl?: string;
 
-  @prop({ enum: APPLICATION_STATUSES, default: "pending" })
+  @prop({ type: String, enum: APPLICATION_STATUSES, default: "pending" })
   status!: ApplicationStatus;
 
   @prop()

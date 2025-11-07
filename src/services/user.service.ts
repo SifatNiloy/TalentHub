@@ -1,58 +1,130 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { UserModel, UserRole } from "../models/user.model";
-import { ApiError } from "../utils/apiError";
-import bcrypt from "bcrypt";
+import { UserModel } from "../models/user.model";
 
-export const UserService = {
-  async create(payload: any) {
-    const existing = await UserModel.findOne({ email: payload.email });
-    if (existing) throw new ApiError("Email already registered", 400);
 
-    const hashedPassword = await bcrypt.hash(payload.password, 10);
-    const user = await UserModel.create({
-      ...payload,
-      password: hashedPassword,
-    });
+export async function findUserById(id: string) {
+  return UserModel.findById(id).select("-password");
+}
 
-    return user;
-  },
+export async function findUserByIdWithPassword(id: string) {
+  return UserModel.findById(id);
+}
 
-  async getById(id: string) {
-    const user = await UserModel.findById(id);
-    if (!user) throw new ApiError("User not found", 404);
-    return user;
-  },
+export async function findUserByEmail(email: string) {
+  return UserModel.findOne({ email });
+}
 
-  async findAll(query: { role?: UserRole; page?: number; limit?: number }) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const skip = (page - 1) * limit;
+export async function findUserByEmailWithoutPassword(email: string) {
+  return UserModel.findOne({ email }).select("-password");
+}
 
-    const filter: any = {};
-    if (query.role) filter.role = query.role;
+export async function createUser(payload: any) {
+  return UserModel.create(payload);
+}
 
-    const [total, items] = await Promise.all([
-      UserModel.countDocuments(filter),
-      UserModel.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
-    ]);
+export async function findAllUsers(
+  filter: any,
+  page: number,
+  limit: number,
+  searchQuery?: string
+) {
+  const query: any = { ...filter };
 
-    return { total, page, limit, items };
-  },
+  // Add search functionality
+  if (searchQuery) {
+    query.$or = [
+      { name: { $regex: searchQuery, $options: "i" } },
+      { email: { $regex: searchQuery, $options: "i" } },
+      { "companyProfile.companyName": { $regex: searchQuery, $options: "i" } }
+    ];
+  }
 
-  async update(id: string, payload: Partial<any>) {
-    if (payload.password) {
-      payload.password = await bcrypt.hash(payload.password, 10);
-    }
+  return UserModel.find(query)
+    .select("-password")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+}
 
-    const user = await UserModel.findByIdAndUpdate(id, payload, { new: true });
-    if (!user) throw new ApiError("User not found", 404);
+export async function countUsers(filter: any, searchQuery?: string) {
+  const query: any = { ...filter };
 
-    return user;
-  },
+  if (searchQuery) {
+    query.$or = [
+      { name: { $regex: searchQuery, $options: "i" } },
+      { email: { $regex: searchQuery, $options: "i" } },
+      { "companyProfile.companyName": { $regex: searchQuery, $options: "i" } }
+    ];
+  }
 
-  async delete(id: string) {
-    const user = await UserModel.findByIdAndDelete(id);
-    if (!user) throw new ApiError("User not found", 404);
-    return user;
-  },
-};
+  return UserModel.countDocuments(query);
+}
+
+export async function updateUserById(id: string, payload: any) {
+  return UserModel.findByIdAndUpdate(id, payload, { new: true }).select("-password");
+}
+
+export async function deleteUserById(id: string) {
+  return UserModel.findByIdAndDelete(id).select("-password");
+}
+
+export async function updateUserPassword(id: string, hashedPassword: string) {
+  return UserModel.findByIdAndUpdate(id, { password: hashedPassword }, { new: true }).select("-password");
+}
+
+export async function incrementProfileViews(id: string) {
+  return UserModel.findByIdAndUpdate(id, { $inc: { profileViews: 1 } }, { new: true }).select("-password");
+}
+
+export async function updateLastLogin(id: string) {
+  return UserModel.findByIdAndUpdate(id, { lastLoginAt: new Date() }, { new: true }).select("-password");
+}
+
+export async function verifyUserEmail(id: string) {
+  return UserModel.findByIdAndUpdate(
+    id,
+    { isEmailVerified: true, emailVerifiedAt: new Date() },
+    { new: true }
+  ).select("-password");
+}
+
+export async function findUsersByRole(role: string, page: number, limit: number) {
+  return UserModel.find({ role })
+    .select("-password")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+}
+
+export async function countUsersByRole(role: string) {
+  return UserModel.countDocuments({ role });
+}
+
+export async function findUsersByStatus(status: string, page: number, limit: number) {
+  return UserModel.find({ status })
+    .select("-password")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+}
+
+export async function findUsersBySkills(skills: string[], page: number, limit: number) {
+  return UserModel.find({
+    "jobSeekerProfile.skills.name": { $in: skills }
+  })
+    .select("-password")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+}
+
+export async function findEmployersByIndustry(industry: string, page: number, limit: number) {
+  return UserModel.find({
+    role: "employer",
+    "companyProfile.industry": industry
+  })
+    .select("-password")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+}
