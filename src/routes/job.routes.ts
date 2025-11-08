@@ -1,45 +1,66 @@
-import express from "express";
+import { Router } from "express";
 import {
+  createJobHandler,
+  getAllJobsHandler,
   getJobByIdHandler,
   updateJobHandler,
   deleteJobHandler,
-  createJobHandler,
-  getAllJobsHandler,
+  getMyJobsHandler,
+  getSimilarJobsHandler,
+  getJobsByLocationHandler,
+  searchJobsByTagsHandler,
+  updateExpiredJobsHandler,
+  getJobStatsHandler
 } from "../controllers/job.controller";
-import { createJobSchema, jobIdSchema, updateJobSchema } from "../schema/job.schema";
-import { asyncWrapper, validateResource } from "../middleware";
+import {
+  createJobSchema,
+  updateJobSchema,
+  jobIdSchema,
+  jobQuerySchema
+} from "../schema/job.schema";
+import { asyncWrapper, requireUser, requireRole, validateResource } from "../middleware";
+import { UserRole } from "../constants/user.constant";
 
-const router = express.Router();
+const router = Router();
 
-// Create a new job
+// Public routes
+router.get("/all", validateResource(jobQuerySchema), asyncWrapper(getAllJobsHandler));
+router.get("/single/:id", validateResource(jobIdSchema), asyncWrapper(getJobByIdHandler));
+router.get("/location/:location", asyncWrapper(getJobsByLocationHandler));
+router.get("/similar/:id", validateResource(jobIdSchema), asyncWrapper(getSimilarJobsHandler));
+router.post("/search-by-tags", asyncWrapper(searchJobsByTagsHandler));
+
+// Protected routes (authenticated users)
 router.post(
   "/create",
+  requireUser,
+  requireRole(UserRole.EMPLOYER, UserRole.ADMIN),
   validateResource(createJobSchema),
   asyncWrapper(createJobHandler)
 );
+router.get("/my-jobs", requireUser, asyncWrapper(getMyJobsHandler));
+router.get("/stats", requireUser, asyncWrapper(getJobStatsHandler));
 
-// Get all jobs (with filters)
-router.get("/all", asyncWrapper(getAllJobsHandler));
-
-// Get a single job
-router.get(
-  "/:id",
-  validateResource(jobIdSchema),
-  asyncWrapper(getJobByIdHandler)
-);
-
-// Update a job
-router.put(
+router.patch(
   "/update/:id",
+  requireUser,
   validateResource(updateJobSchema),
   asyncWrapper(updateJobHandler)
 );
 
-// Delete a job
 router.delete(
   "/delete/:id",
+  requireUser,
   validateResource(jobIdSchema),
   asyncWrapper(deleteJobHandler)
+);
+
+// Admin only routes
+router.patch(
+  "/expired/update",
+  requireUser,
+  requireRole(UserRole.ADMIN),
+  asyncWrapper(updateExpiredJobsHandler)
 );
 
 export default router;
