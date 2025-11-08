@@ -6,9 +6,8 @@ import {
   createJobHandler,
   getAllJobsHandler,
 } from "../controllers/job.controller";
-import validateResource from "../middleware/validateresource";
 import { createJobSchema, jobIdSchema, updateJobSchema } from "../schema/job.schema";
-import asyncWrapper from "../utils/async-wrapper";
+import { asyncWrapper, validateResource } from "../middleware";
 
 const router = express.Router();
 

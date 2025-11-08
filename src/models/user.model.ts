@@ -57,7 +57,7 @@ export class Education {
   fieldOfStudy: string;
 
   @prop({ required: true, type: Date })
-  startDate: Date;
+  startDate: Date ;
 
   @prop({ required: false, type: Date, default: null })
   endDate?: Date;

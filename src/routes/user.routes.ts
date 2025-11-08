@@ -14,7 +14,6 @@ import {
   searchUsersBySkillsHandler,
   getEmployersByIndustryHandler
 } from "../controllers/user.controller";
-import validateResource from "../middleware/validateresource";
 import {
   createUserSchema,
   updateUserSchema,
@@ -25,6 +24,7 @@ import {
   paginationQuerySchema
 } from "../schema/user.schema";
 import asyncWrapper from "../utils/async-wrapper";
+import { requireUser, validateResource } from "../middleware";
 
 const router = Router();
 

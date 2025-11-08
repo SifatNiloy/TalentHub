@@ -1,73 +1,70 @@
 import { Request, Response, NextFunction } from "express";
-import { SendErrorResponse } from "../utils/send-error-response";
+import { Error as MongooseError } from "mongoose";
 import { INTERNAL_SERVER_ERROR } from "../constants/error-codes";
-import { v4 as uuid } from "uuid";
+import { SendErrorResponse } from "../utils/responseHandler";
+import { buildErrorPayload } from "./helpers";
 
-const SYSTEM_CURRENT_FEATURES = {
-  ERROR_HANDLER: "ERROR_HANDLER"
-};
-
-function buildErrorPayload(
-  endpoint: string,
-  functionName: string,
-  method: string,
-  message: string,
-  error: { code: string; message: string },
-  customMsg: string,
-  stack?: string
-) {
-  return {
-    message,
-    data: {
-      clientError: { ...error, message: customMsg },
-      endpoint,
-      functionName,
-      method,
-      service: SYSTEM_CURRENT_FEATURES.ERROR_HANDLER,
-      id: uuid(),
-      stack: process.env.NODE_ENV === "development" ? stack : undefined
-    }
-  };
+interface MongooseDuplicateKeyError extends Error {
+  code: number;
+  keyPattern: Record<string, unknown>;
 }
 
-const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-  const functionName = "errorHandler";
+interface MongooseCastError extends MongooseError.CastError {
+  path: string;
+  value: unknown;
+}
 
+interface ApiErrorType extends Error {
+  name: "ApiError";
+  code?: string;
+  statusCode?: number;
+}
+
+export const errorHandler = (
+  err: Error | MongooseError.ValidationError | MongooseDuplicateKeyError | MongooseCastError | ApiErrorType,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction
+) => {
   console.error("Error:", err);
 
   // Mongoose validation error
-  if (err.name === "ValidationError") {
-    const errors = Object.values(err.errors).map((e: any) => ({
-      field: e.path,
+  if (err.name === "ValidationError" && "errors" in err) {
+    const validationError = err as MongooseError.ValidationError;
+    const errors = Object.values(validationError.errors).map((e) => ({
+      path: e.path,
       message: e.message
     }));
 
-    return SendErrorResponse.error({
+    return SendErrorResponse.badRequest({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "errorHandler",
         "Validation error",
         { code: "VALIDATION_ERROR", message: "Validation failed" },
         "Please check your input and try again.",
-        err.stack
+        "ERROR_HANDLER",
+        err.stack,
+        errors
       )
     });
   }
 
   // Mongoose duplicate key error
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern)[0];
-    return SendErrorResponse.error({
+  if ("code" in err && err.code === 11000) {
+    const duplicateError = err as MongooseDuplicateKeyError;
+    const field = Object.keys(duplicateError.keyPattern)[0];
+    return SendErrorResponse.conflict({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "errorHandler",
         "Duplicate entry",
         { code: "DUPLICATE_ENTRY", message: "Duplicate entry detected" },
         `${field} already exists. Please use a different value.`,
+        "ERROR_HANDLER",
         err.stack
       )
     });
@@ -75,15 +72,16 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
 
   // Mongoose CastError (invalid ObjectId)
   if (err.name === "CastError") {
-    return SendErrorResponse.error({
+    const castError = err as MongooseCastError;
+    return SendErrorResponse.badRequest({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "errorHandler",
         "Invalid ID",
         { code: "INVALID_ID", message: "Invalid ID format" },
-        `Invalid ${err.path}: ${err.value}`,
+        `Invalid ${castError.path}: ${castError.value}`,
+        "ERROR_HANDLER",
         err.stack
       )
     });
@@ -91,16 +89,20 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
 
   // Custom ApiError
   if (err.name === "ApiError") {
-    return SendErrorResponse.error({
+    const apiError = err as ApiErrorType;
+    const statusCode = apiError.statusCode || 500;
+
+    return SendErrorResponse.custom({
       res,
+      statusCode,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
-        err.message,
-        { code: err.code || "API_ERROR", message: err.message },
-        err.message,
-        err.stack
+        req,
+        "errorHandler",
+        apiError.message,
+        { code: apiError.code || "API_ERROR", message: apiError.message },
+        apiError.message,
+        "ERROR_HANDLER",
+        apiError.stack
       )
     });
   }
@@ -109,15 +111,13 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
   return SendErrorResponse.error({
     res,
     ...buildErrorPayload(
-      req.originalUrl,
-      functionName,
-      req.method.toUpperCase(),
+      req,
+      "errorHandler",
       "Internal server error",
       INTERNAL_SERVER_ERROR,
       "An unexpected error occurred. Please try again later.",
+      "ERROR_HANDLER",
       err.stack
     )
   });
 };
-
-export default errorHandler;

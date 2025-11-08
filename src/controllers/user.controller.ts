@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import * as UserService from "../services/user.service";
 import { CreateUserDto, UpdateUserDto, UpdateProfileDto, UpdateJobSeekerProfileDto, UpdateCompanyProfileDto, ChangePasswordDto } from "../schema/user.schema";
 import { SendResponse } from "../utils/send-response";
-import { SendErrorResponse } from "../utils/send-error-response";
+import { SendErrorResponse } from "../utils/responseHandler";
 import { INPUT_MISSING, INCORRECT_INPUT, DATA_NOT_FOUND, UNAUTHORIZED, ALREADY_EXISTS } from "../constants/error-codes";
 
 const SYSTEM_CURRENT_FEATURES = {

@@ -1,6 +1,5 @@
 import express from "express";
 
-import validateResource from "../middleware/validateresource";
 import {
     applicationIdSchema,
   createApplicationSchema,
@@ -8,8 +7,8 @@ import {
   updateApplicationSchema,
   updateStatusSchema,
 } from "../schema/application.schema";
-import asyncWrapper from "../utils/async-wrapper";
 import { applyJobHandler, deleteApplicationHandler, getSingleApplicationHandler, listApplicationsHandler, updateApplicationHandler, updateApplicationStatusHandler, withdrawApplicationHandler } from "../controllers/application.controller";
+import { asyncWrapper, validateResource } from "../middleware";
 
 const router = express.Router();
 

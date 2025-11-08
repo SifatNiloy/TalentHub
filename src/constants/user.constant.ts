@@ -1,38 +1,33 @@
-export const USER_ROLES = ["job_seeker", "employer"] as const;
-export type UserRole = (typeof USER_ROLES)[number];
 
-export enum USER_STATUS {
+export enum UserRole {
+  ADMIN = "admin",
+  EMPLOYER = "employer",
+  JOB_SEEKER = "jobseeker",
+  USER = "user"
+}
+
+export enum UserStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   SUSPENDED = "suspended",
-  PENDING_VERIFICATION = "pending_verification"
+  PENDING = "pending"
 }
 
-export enum EXPERIENCE_LEVEL {
-  ENTRY = "entry",
-  INTERMEDIATE = "intermediate",
-  SENIOR = "senior",
-  EXPERT = "expert"
-}
+export const USER_ROLES = Object.values(UserRole);
+export const USER_STATUSES = Object.values(UserStatus);
 
-export enum EMPLOYMENT_TYPE_PREFERENCE {
-  FULL_TIME = "full_time",
-  PART_TIME = "part_time",
-  CONTRACT = "contract",
-  FREELANCE = "freelance",
-  INTERNSHIP = "internship"
-}
+// Validation constants
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 128;
+export const NAME_MIN_LENGTH = 2;
+export const NAME_MAX_LENGTH = 100;
 
-export enum COMPANY_SIZE {
-  STARTUP = "1-10",
-  SMALL = "11-50",
-  MEDIUM = "51-200",
-  LARGE = "201-1000",
-  ENTERPRISE = "1000+"
-}
+// JWT constants
+export const JWT_EXPIRES_IN = "7d";
+export const REFRESH_TOKEN_EXPIRES_IN = "30d";
 
-export const allowedResumeFileTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-
-export const allowedProfileImageTypes = ["image/jpeg", "image/png", "image/jpg"];
-
-export const allowedCompanyLogoTypes = ["image/jpeg", "image/png", "image/jpg", "image/svg+xml"];
+// File upload constants
+export const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+export const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
+export const ALLOWED_RESUME_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
