@@ -1,5 +1,10 @@
-import { object, string, TypeOf, array, number, boolean, date } from "zod";
-import { USER_ROLES, EXPERIENCE_LEVEL, EMPLOYMENT_TYPE_PREFERENCE, COMPANY_SIZE, USER_STATUS } from "../constants/user.constants";
+import { object, string, TypeOf, array, number, boolean } from "zod";
+import {
+  USER_ROLES,
+  EXPERIENCE_LEVEL,
+  COMPANY_SIZE,
+  USER_STATUSES
+} from "../constants/user.constant";
 
 // Social Links Schema
 const socialLinksSchema = object({
@@ -55,7 +60,7 @@ const companyProfileSchema = object({
   website: string().url().optional(),
   industry: string().optional(),
   companySize: string()
-    .refine((val) => !val || Object.values(COMPANY_SIZE).includes(val as any), {
+    .refine((val) => !val || COMPANY_SIZE.includes(val), {
       message: "Invalid company size"
     })
     .optional(),
@@ -74,7 +79,7 @@ const jobSeekerProfileSchema = object({
   headline: string().optional(),
   bio: string().optional(),
   experienceLevel: string()
-    .refine((val) => !val || Object.values(EXPERIENCE_LEVEL).includes(val as any), {
+    .refine((val) => !val || EXPERIENCE_LEVEL.includes(val), {
       message: "Invalid experience level"
     })
     .optional(),
@@ -99,7 +104,7 @@ export const createUserSchema = object({
     email: string().email("Invalid email address"),
     password: string().min(6, "Password must be at least 6 characters"),
     role: string().refine((val) => USER_ROLES.includes(val as any), {
-      message: "Role must be either 'job_seeker' or 'employer'"
+      message: "Role must be one of: admin, employer, job_seeker, user"
     }),
     phoneNumber: string().optional(),
     location: string().optional(),
@@ -120,14 +125,14 @@ export const updateUserSchema = object({
     jobSeekerProfile: jobSeekerProfileSchema.optional(),
     companyProfile: companyProfileSchema.optional(),
     status: string()
-      .refine((val) => !val || Object.values(USER_STATUS).includes(val as any), {
+      .refine((val) => !val || USER_STATUSES.includes(val as any), {
         message: "Invalid status"
       })
       .optional()
   })
 });
 
-// Update Profile Schema (separate from general update)
+// Update Profile Schema
 export const updateProfileSchema = object({
   body: object({
     name: string().min(1).optional(),
@@ -171,7 +176,7 @@ export const paginationQuerySchema = object({
       }),
     status: string()
       .optional()
-      .refine((val) => !val || Object.values(USER_STATUS).includes(val as any), {
+      .refine((val) => !val || USER_STATUSES.includes(val as any), {
         message: "Invalid status filter"
       }),
     search: string().optional()

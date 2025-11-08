@@ -23,8 +23,7 @@ import {
   changePasswordSchema,
   paginationQuerySchema
 } from "../schema/user.schema";
-import asyncWrapper from "../utils/async-wrapper";
-import { requireUser, validateResource } from "../middleware";
+import { asyncWrapper, requireUser, validateResource } from "../middleware";
 
 const router = Router();
 
@@ -43,7 +42,7 @@ router.patch("/me/job-seeker-profile", requireUser, validateResource(updateJobSe
 router.patch("/me/company-profile", requireUser, validateResource(updateCompanyProfileSchema), asyncWrapper(updateCompanyProfileHandler));
 router.patch("/me/change-password", requireUser, validateResource(changePasswordSchema), asyncWrapper(changePasswordHandler));
 
-// Admin routes (you might want to add role-based middleware)
+// Admin routes (will add role-based middleware later)
 router.patch("/:id", validateResource(updateUserSchema), asyncWrapper(updateUserHandler));
 router.delete("/:id", asyncWrapper(deleteUserHandler));
 

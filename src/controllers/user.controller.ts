@@ -1,54 +1,40 @@
 import { Request, Response } from "express";
-import { v4 as uuid } from "uuid";
 import bcrypt from "bcrypt";
 import * as UserService from "../services/user.service";
-import { CreateUserDto, UpdateUserDto, UpdateProfileDto, UpdateJobSeekerProfileDto, UpdateCompanyProfileDto, ChangePasswordDto } from "../schema/user.schema";
-import { SendResponse } from "../utils/send-response";
-import { SendErrorResponse } from "../utils/responseHandler";
-import { INPUT_MISSING, INCORRECT_INPUT, DATA_NOT_FOUND, UNAUTHORIZED, ALREADY_EXISTS } from "../constants/error-codes";
-
-const SYSTEM_CURRENT_FEATURES = {
-  USER_MANAGEMENT: "USER_MANAGEMENT"
-};
-
-function buildErrorPayload(
-  endpoint: string,
-  functionName: string,
-  method: string,
-  message: string,
-  error: { code: string; message: string },
-  customMsg: string
-) {
-  return {
-    message,
-    data: {
-      clientError: { ...error, message: customMsg },
-      endpoint,
-      functionName,
-      method,
-      service: SYSTEM_CURRENT_FEATURES.USER_MANAGEMENT,
-      id: uuid()
-    }
-  };
-}
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UpdateProfileDto,
+  UpdateJobSeekerProfileDto,
+  UpdateCompanyProfileDto,
+  ChangePasswordDto
+} from "../schema/user.schema";
+import { SendSuccessResponse, SendErrorResponse } from "../utils";
+import {
+  INPUT_MISSING,
+  INCORRECT_INPUT,
+  DATA_NOT_FOUND,
+  UNAUTHORIZED,
+  ALREADY_EXISTS
+} from "../constants/error-codes";
+import { buildErrorPayload } from "../middleware/helpers";
 
 // Create a new user
 export async function createUserHandler(req: Request, res: Response) {
-  const functionName = createUserHandler.name;
   const payload: CreateUserDto = req.body;
 
   // Check if user already exists
   const existingUser = await UserService.findUserByEmail(payload.email);
   if (existingUser) {
-    return SendErrorResponse.error({
+    return SendErrorResponse.conflict({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "createUserHandler",
         "Email already registered",
         ALREADY_EXISTS,
-        "This email address is already registered. Please use a different email or login to your existing account."
+        "This email address is already registered. Please use a different email or login to your existing account.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -56,7 +42,7 @@ export async function createUserHandler(req: Request, res: Response) {
   // Hash password
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-  // Create user
+ // Create user
   const user = await UserService.createUser({
     ...payload,
     password: hashedPassword
@@ -66,30 +52,29 @@ export async function createUserHandler(req: Request, res: Response) {
     return SendErrorResponse.error({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "createUserHandler",
         "Failed to create user",
         DATA_NOT_FOUND,
-        "Unable to create user account. Please try again later or contact support."
+        "Unable to create user account. Please try again later or contact support.",
+        "USER_MANAGEMENT"
       )
     });
   }
 
   // Remove password from response
-  const userResponse = user.toObject();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userResponse: any = user.toObject();
   delete userResponse.password;
 
-  return SendResponse.created({
+  return SendSuccessResponse.created({
     res,
     message: "User created successfully!",
     data: userResponse
   });
 }
-
 // Get a single user by ID
 export async function getUserHandler(req: Request, res: Response) {
-  const functionName = getUserHandler.name;
   const { id } = req.params;
 
   const user = await UserService.findUserById(id);
@@ -98,12 +83,12 @@ export async function getUserHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "getUserHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "The requested user could not be found. Please check the user ID and try again."
+        "The requested user could not be found. Please check the user ID and try again.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -111,7 +96,7 @@ export async function getUserHandler(req: Request, res: Response) {
   // Increment profile views
   await UserService.incrementProfileViews(id);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "User retrieved successfully!",
     data: user
@@ -120,7 +105,6 @@ export async function getUserHandler(req: Request, res: Response) {
 
 // Get all users with filtering & pagination
 export async function getAllUsersHandler(req: Request, res: Response) {
-  const functionName = getAllUsersHandler.name;
   const { page = "1", limit = "10", role, status, search } = req.query;
 
   const pageNum = parseInt(page as string, 10);
@@ -136,7 +120,7 @@ export async function getAllUsersHandler(req: Request, res: Response) {
     UserService.findAllUsers(filter, pageNum, limitNum, search as string)
   ]);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Users retrieved successfully!",
     data: {
@@ -151,7 +135,6 @@ export async function getAllUsersHandler(req: Request, res: Response) {
 
 // Update a user by ID
 export async function updateUserHandler(req: Request, res: Response) {
-  const functionName = updateUserHandler.name;
   const { id } = req.params;
   const payload: UpdateUserDto = req.body;
 
@@ -161,12 +144,12 @@ export async function updateUserHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateUserHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "The user you're trying to update could not be found."
+        "The user you're trying to update could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -175,15 +158,15 @@ export async function updateUserHandler(req: Request, res: Response) {
   if (payload.email && payload.email !== existingUser.email) {
     const emailExists = await UserService.findUserByEmail(payload.email);
     if (emailExists) {
-      return SendErrorResponse.error({
+      return SendErrorResponse.conflict({
         res,
         ...buildErrorPayload(
-          req.originalUrl,
-          functionName,
-          req.method.toUpperCase(),
+          req,
+          "updateUserHandler",
           "Email already in use",
           ALREADY_EXISTS,
-          "This email address is already registered to another account."
+          "This email address is already registered to another account.",
+          "USER_MANAGEMENT"
         )
       });
     }
@@ -196,7 +179,7 @@ export async function updateUserHandler(req: Request, res: Response) {
 
   const updatedUser = await UserService.updateUserById(id, cleanPayload);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "User updated successfully!",
     data: updatedUser
@@ -205,7 +188,6 @@ export async function updateUserHandler(req: Request, res: Response) {
 
 // Delete a user by ID
 export async function deleteUserHandler(req: Request, res: Response) {
-  const functionName = deleteUserHandler.name;
   const { id } = req.params;
 
   const user = await UserService.deleteUserById(id);
@@ -214,17 +196,17 @@ export async function deleteUserHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "deleteUserHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "The user you're trying to delete could not be found."
+        "The user you're trying to delete could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "User deleted successfully!",
     data: user
@@ -233,20 +215,19 @@ export async function deleteUserHandler(req: Request, res: Response) {
 
 // Update user profile (self-update)
 export async function updateProfileHandler(req: Request, res: Response) {
-  const functionName = updateProfileHandler.name;
-  const userId = res.locals.user?.id; // Assuming you have authentication middleware
+  const userId = res.locals.user?.id;
   const payload: UpdateProfileDto = req.body;
 
   if (!userId) {
     return SendErrorResponse.unauthorized({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateProfileHandler",
         "Unauthorized",
         UNAUTHORIZED,
-        "You must be logged in to update your profile."
+        "You must be logged in to update your profile.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -261,17 +242,17 @@ export async function updateProfileHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateProfileHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "Your profile could not be found."
+        "Your profile could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Profile updated successfully!",
     data: updatedUser
@@ -280,7 +261,6 @@ export async function updateProfileHandler(req: Request, res: Response) {
 
 // Update job seeker profile
 export async function updateJobSeekerProfileHandler(req: Request, res: Response) {
-  const functionName = updateJobSeekerProfileHandler.name;
   const userId = res.locals.user?.id;
   const payload: UpdateJobSeekerProfileDto = req.body;
 
@@ -288,12 +268,12 @@ export async function updateJobSeekerProfileHandler(req: Request, res: Response)
     return SendErrorResponse.unauthorized({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateJobSeekerProfileHandler",
         "Unauthorized",
         UNAUTHORIZED,
-        "You must be logged in to update your profile."
+        "You must be logged in to update your profile.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -304,26 +284,26 @@ export async function updateJobSeekerProfileHandler(req: Request, res: Response)
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateJobSeekerProfileHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "Your profile could not be found."
+        "Your profile could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
 
   if (user.role !== "job_seeker") {
-    return SendErrorResponse.error({
+    return SendErrorResponse.forbidden({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateJobSeekerProfileHandler",
         "Invalid user role",
         INCORRECT_INPUT,
-        "Only job seekers can update job seeker profiles."
+        "Only job seekers can update job seeker profiles.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -332,7 +312,7 @@ export async function updateJobSeekerProfileHandler(req: Request, res: Response)
     jobSeekerProfile: payload
   });
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Job seeker profile updated successfully!",
     data: updatedUser
@@ -341,7 +321,6 @@ export async function updateJobSeekerProfileHandler(req: Request, res: Response)
 
 // Update company profile
 export async function updateCompanyProfileHandler(req: Request, res: Response) {
-  const functionName = updateCompanyProfileHandler.name;
   const userId = res.locals.user?.id;
   const payload: UpdateCompanyProfileDto = req.body;
 
@@ -349,12 +328,12 @@ export async function updateCompanyProfileHandler(req: Request, res: Response) {
     return SendErrorResponse.unauthorized({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateCompanyProfileHandler",
         "Unauthorized",
         UNAUTHORIZED,
-        "You must be logged in to update your company profile."
+        "You must be logged in to update your company profile.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -365,26 +344,26 @@ export async function updateCompanyProfileHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateCompanyProfileHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "Your profile could not be found."
+        "Your profile could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
 
   if (user.role !== "employer") {
-    return SendErrorResponse.error({
+    return SendErrorResponse.forbidden({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "updateCompanyProfileHandler",
         "Invalid user role",
         INCORRECT_INPUT,
-        "Only employers can update company profiles."
+        "Only employers can update company profiles.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -393,7 +372,7 @@ export async function updateCompanyProfileHandler(req: Request, res: Response) {
     companyProfile: payload
   });
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Company profile updated successfully!",
     data: updatedUser
@@ -402,7 +381,6 @@ export async function updateCompanyProfileHandler(req: Request, res: Response) {
 
 // Change password
 export async function changePasswordHandler(req: Request, res: Response) {
-  const functionName = changePasswordHandler.name;
   const userId = res.locals.user?.id;
   const payload: ChangePasswordDto = req.body;
 
@@ -410,12 +388,12 @@ export async function changePasswordHandler(req: Request, res: Response) {
     return SendErrorResponse.unauthorized({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "changePasswordHandler",
         "Unauthorized",
         UNAUTHORIZED,
-        "You must be logged in to change your password."
+        "You must be logged in to change your password.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -426,12 +404,12 @@ export async function changePasswordHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "changePasswordHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "Your account could not be found."
+        "Your account could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -442,12 +420,12 @@ export async function changePasswordHandler(req: Request, res: Response) {
     return SendErrorResponse.unauthorized({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "changePasswordHandler",
         "Invalid password",
         INCORRECT_INPUT,
-        "The current password you entered is incorrect."
+        "The current password you entered is incorrect.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -458,7 +436,7 @@ export async function changePasswordHandler(req: Request, res: Response) {
   // Update password
   const updatedUser = await UserService.updateUserPassword(userId, hashedPassword);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Password changed successfully!",
     data: updatedUser
@@ -467,9 +445,22 @@ export async function changePasswordHandler(req: Request, res: Response) {
 
 // Get users by role
 export async function getUsersByRoleHandler(req: Request, res: Response) {
-  const functionName = getUsersByRoleHandler.name;
   const { role } = req.params;
   const { page = "1", limit = "10" } = req.query;
+
+  if (!role) {
+    return SendErrorResponse.badRequest({
+      res,
+      ...buildErrorPayload(
+        req,
+        "getUsersByRoleHandler",
+        "Role parameter required",
+        INPUT_MISSING,
+        "Role parameter is required in the URL.",
+        "USER_MANAGEMENT"
+      )
+    });
+  }
 
   const pageNum = parseInt(page as string, 10);
   const limitNum = parseInt(limit as string, 10);
@@ -479,7 +470,7 @@ export async function getUsersByRoleHandler(req: Request, res: Response) {
     UserService.findUsersByRole(role, pageNum, limitNum)
   ]);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: `${role} users retrieved successfully!`,
     data: {
@@ -492,21 +483,20 @@ export async function getUsersByRoleHandler(req: Request, res: Response) {
   });
 }
 
-// Get current user profile (authenticated user)
+// Get current user profile
 export async function getCurrentUserHandler(req: Request, res: Response) {
-  const functionName = getCurrentUserHandler.name;
   const userId = res.locals.user?.id;
 
   if (!userId) {
     return SendErrorResponse.unauthorized({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "getCurrentUserHandler",
         "Unauthorized",
         UNAUTHORIZED,
-        "You must be logged in to access your profile."
+        "You must be logged in to access your profile.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -517,17 +507,17 @@ export async function getCurrentUserHandler(req: Request, res: Response) {
     return SendErrorResponse.notFound({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "getCurrentUserHandler",
         "User not found",
         DATA_NOT_FOUND,
-        "Your profile could not be found."
+        "Your profile could not be found.",
+        "USER_MANAGEMENT"
       )
     });
   }
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Profile retrieved successfully!",
     data: user
@@ -536,20 +526,19 @@ export async function getCurrentUserHandler(req: Request, res: Response) {
 
 // Search users by skills
 export async function searchUsersBySkillsHandler(req: Request, res: Response) {
-  const functionName = searchUsersBySkillsHandler.name;
-  const { skills } = req.body; // Expecting array of skill names
+  const { skills } = req.body;
   const { page = "1", limit = "10" } = req.query;
 
   if (!skills || !Array.isArray(skills) || skills.length === 0) {
-    return SendErrorResponse.error({
+    return SendErrorResponse.badRequest({
       res,
       ...buildErrorPayload(
-        req.originalUrl,
-        functionName,
-        req.method.toUpperCase(),
+        req,
+        "searchUsersBySkillsHandler",
         "Skills required",
         INPUT_MISSING,
-        "Please provide at least one skill to search."
+        "Please provide at least one skill to search.",
+        "USER_MANAGEMENT"
       )
     });
   }
@@ -559,7 +548,7 @@ export async function searchUsersBySkillsHandler(req: Request, res: Response) {
 
   const users = await UserService.findUsersBySkills(skills, pageNum, limitNum);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: "Users with matching skills retrieved successfully!",
     data: {
@@ -572,7 +561,6 @@ export async function searchUsersBySkillsHandler(req: Request, res: Response) {
 
 // Get employers by industry
 export async function getEmployersByIndustryHandler(req: Request, res: Response) {
-  // const functionName = getEmployersByIndustryHandler.name;
   const { industry } = req.params;
   const { page = "1", limit = "10" } = req.query;
 
@@ -581,7 +569,7 @@ export async function getEmployersByIndustryHandler(req: Request, res: Response)
 
   const employers = await UserService.findEmployersByIndustry(industry, pageNum, limitNum);
 
-  return SendResponse.success({
+  return SendSuccessResponse.success({
     res,
     message: `Employers in ${industry} industry retrieved successfully!`,
     data: {

@@ -1,5 +1,12 @@
 import { prop, getModelForClass, modelOptions, index, Severity } from "@typegoose/typegoose";
-import { USER_ROLES, UserRole, USER_STATUS, EXPERIENCE_LEVEL, EMPLOYMENT_TYPE_PREFERENCE, COMPANY_SIZE } from "../constants/user.constants";
+import {
+  USER_ROLES,
+  UserRole,
+  EXPERIENCE_LEVEL,
+  EMPLOYMENT_TYPE_PREFERENCE,
+  COMPANY_SIZE,
+  USER_STATUSES
+} from "../constants/user.constant";
 
 export class SocialLinks {
   @prop({ required: false, type: String, default: null })
@@ -17,24 +24,24 @@ export class SocialLinks {
 
 export class Skills {
   @prop({ required: true, type: String })
-  name: string;
+  name!: string;
 
   @prop({ required: false, type: String, default: "intermediate" })
-  proficiency?: string; // beginner, intermediate, advanced, expert
+  proficiency?: string;
 }
 
 export class Experience {
   @prop({ required: true, type: String })
-  jobTitle: string;
+  jobTitle!: string;
 
   @prop({ required: true, type: String })
-  companyName: string;
+  companyName!: string;
 
   @prop({ required: false, type: String, default: null })
   location?: string;
 
   @prop({ required: true, type: Date })
-  startDate: Date;
+  startDate!: Date;
 
   @prop({ required: false, type: Date, default: null })
   endDate?: Date;
@@ -48,16 +55,16 @@ export class Experience {
 
 export class Education {
   @prop({ required: true, type: String })
-  degree: string;
+  degree!: string;
 
   @prop({ required: true, type: String })
-  institution: string;
+  institution!: string;
 
   @prop({ required: true, type: String })
-  fieldOfStudy: string;
+  fieldOfStudy!: string;
 
   @prop({ required: true, type: Date })
-  startDate: Date ;
+  startDate!: Date;
 
   @prop({ required: false, type: Date, default: null })
   endDate?: Date;
@@ -79,7 +86,7 @@ export class CompanyProfile {
   @prop({ required: false, type: String, default: null })
   industry?: string;
 
-  @prop({ required: false, type: String, enum: Object.values(COMPANY_SIZE), default: COMPANY_SIZE.STARTUP })
+  @prop({ required: false, type: String, enum: COMPANY_SIZE, default: "1-10" })
   companySize?: string;
 
   @prop({ required: false, type: String, default: null })
@@ -97,18 +104,18 @@ export class JobSeekerProfile {
   resumeUrl?: string;
 
   @prop({ required: false, type: String, default: null })
-  headline?: string; // Professional headline/tagline
+  headline?: string;
 
   @prop({ required: false, type: String, default: null })
   bio?: string;
 
-  @prop({ required: false, type: String, enum: Object.values(EXPERIENCE_LEVEL), default: EXPERIENCE_LEVEL.ENTRY })
+  @prop({ required: false, type: String, enum: EXPERIENCE_LEVEL, default: "entry" })
   experienceLevel?: string;
 
-  @prop({ required: false, type: Array<String>, default: [] })
+  @prop({ required: false, type: Array<string>, default: [] })
   preferredLocations?: string[];
 
-  @prop({ required: false, type: Array<String>, enum: Object.values(EMPLOYMENT_TYPE_PREFERENCE), default: [] })
+  @prop({ required: false, type: Array<string>, enum: EMPLOYMENT_TYPE_PREFERENCE, default: [] })
   employmentTypePreference?: string[];
 
   @prop({ required: false, type: Number, default: null })
@@ -118,7 +125,7 @@ export class JobSeekerProfile {
   expectedSalaryMax?: number;
 
   @prop({ required: false, type: String, default: null })
-  salaryType?: string; // hourly, monthly, yearly
+  salaryType?: string;
 
   @prop({ required: false, type: Boolean, default: true })
   openToRemote?: boolean;
@@ -135,19 +142,19 @@ export class JobSeekerProfile {
   @prop({ required: false, type: Array<Education>, _id: false, default: [], allowMixed: Severity.ALLOW })
   education?: Education[];
 
-  @prop({ required: false, type: Array<String>, default: [] })
+  @prop({ required: false, type: Array<string>, default: [] })
   certifications?: string[];
 
-  @prop({ required: false, type: Array<String>, default: [] })
-  languages?: string[]; // e.g., ["English - Native", "Spanish - Fluent"]
+  @prop({ required: false, type: Array<string>, default: [] })
+  languages?: string[];
 }
 
 @modelOptions({
   schemaOptions: {
     timestamps: true,
-    collection: "users",
+    collection: "users"
   },
-  options: { allowMixed: Severity.ALLOW },
+  options: { allowMixed: Severity.ALLOW }
 })
 @index({ email: 1 }, { unique: true })
 @index({ role: 1 })
@@ -163,10 +170,10 @@ export class User {
   @prop({ required: true, type: String })
   password!: string;
 
-  @prop({ type: String, enum: USER_ROLES, default: "job_seeker" })
+  @prop({ type: String, enum: USER_ROLES, default: UserRole.JOB_SEEKER })
   role!: UserRole;
 
-  @prop({ type: String, enum: Object.values(USER_STATUS), default: USER_STATUS.ACTIVE })
+  @prop({ type: String, enum: USER_STATUSES, default: "active" })
   status!: string;
 
   @prop({ required: false, type: String, default: null })
