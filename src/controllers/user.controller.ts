@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import * as UserService from "../services/user.service";
@@ -9,15 +10,9 @@ import {
   UpdateCompanyProfileDto,
   ChangePasswordDto
 } from "../schema/user.schema";
-import { SendSuccessResponse, SendErrorResponse } from "../utils";
-import {
-  INPUT_MISSING,
-  INCORRECT_INPUT,
-  DATA_NOT_FOUND,
-  UNAUTHORIZED,
-  ALREADY_EXISTS
-} from "../constants/error-codes";
 import { buildErrorPayload } from "../middleware/helpers";
+import { SendErrorResponse, SendSuccessResponse } from "../utils/responseHandler";
+import { ALREADY_EXISTS, DATA_NOT_FOUND, EMAIL_ALREADY_EXISTS, INCORRECT_INPUT, INPUT_MISSING, UNAUTHORIZED } from "../constants/error-codes";
 
 // Create a new user
 export async function createUserHandler(req: Request, res: Response) {
@@ -32,7 +27,7 @@ export async function createUserHandler(req: Request, res: Response) {
         req,
         "createUserHandler",
         "Email already registered",
-        ALREADY_EXISTS,
+        EMAIL_ALREADY_EXISTS,
         "This email address is already registered. Please use a different email or login to your existing account.",
         "USER_MANAGEMENT"
       )
@@ -74,7 +69,7 @@ export async function createUserHandler(req: Request, res: Response) {
   });
 }
 // Get a single user by ID
-export async function getUserHandler(req: Request, res: Response) {
+export async function getUserHandler(req: Request<{ id: string }>, res: Response) {
   const { id } = req.params;
 
   const user = await UserService.findUserById(id);
@@ -111,6 +106,7 @@ export async function getAllUsersHandler(req: Request, res: Response) {
   const limitNum = parseInt(limit as string, 10);
 
   // Build filter
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filter: any = {};
   if (role) filter.role = role;
   if (status) filter.status = status;
@@ -134,7 +130,7 @@ export async function getAllUsersHandler(req: Request, res: Response) {
 }
 
 // Update a user by ID
-export async function updateUserHandler(req: Request, res: Response) {
+export async function updateUserHandler(req: Request<{ id: string }>, res: Response) {
   const { id } = req.params;
   const payload: UpdateUserDto = req.body;
 
@@ -187,7 +183,7 @@ export async function updateUserHandler(req: Request, res: Response) {
 }
 
 // Delete a user by ID
-export async function deleteUserHandler(req: Request, res: Response) {
+export async function deleteUserHandler(req: Request<{ id: string }>, res: Response) {
   const { id } = req.params;
 
   const user = await UserService.deleteUserById(id);
@@ -560,7 +556,7 @@ export async function searchUsersBySkillsHandler(req: Request, res: Response) {
 }
 
 // Get employers by industry
-export async function getEmployersByIndustryHandler(req: Request, res: Response) {
+export async function getEmployersByIndustryHandler(req: Request<{ industry: string }>, res: Response) {
   const { industry } = req.params;
   const { page = "1", limit = "10" } = req.query;
 

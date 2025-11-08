@@ -1,6 +1,3 @@
-/**
- * Standard error codes used across the application
- */
 
 export const VALIDATION_ERROR = {
   code: "VALIDATION_ERROR",
@@ -75,4 +72,24 @@ export const EMAIL_ALREADY_EXISTS = {
 export const USER_NOT_FOUND = {
   code: "USER_NOT_FOUND",
   message: "User not found"
+};
+
+export const DATA_NOT_FOUND = {
+  code: "DATA_NOT_FOUND",
+  message: "Data not found"
+};
+
+export const ALREADY_EXISTS = {
+  code: "ALREADY_EXISTS",
+  message: "Already exists"
+};
+
+export const INCORRECT_INPUT = {
+  code: "INCORRECT_INPUT",
+  message: "Incorrect Input"
+};
+
+export const INPUT_MISSING = {
+  code: "INPUT_MISSING",
+  message: "Input Missing"
 };
